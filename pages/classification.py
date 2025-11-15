@@ -1,296 +1,163 @@
 """
 pages/classification.py - EMI Eligibility Classification Page
-
-This page handles:
-- Input form for 22 customer features
-- Real-time classification prediction
-- Eligibility status display
-- Confidence scores
-- Probability breakdown
 """
 
 import streamlit as st
 import numpy as np
 import pandas as pd
-from config import (
-    FEATURE_RANGES, CATEGORICAL_OPTIONS, FEATURE_NAMES,
-    NUMERICAL_FEATURES, CATEGORICAL_FEATURES
-)
-from utils.model_loader import get_best_classification_model
+from utils.model_loader import load_all_models
 from utils.predictions import predict_emi_eligibility
-from utils.visualizations import plot_eligibility_prediction, display_eligibility_status
 
-def main(models):
-    """Main function for classification page"""
+def main():
+    st.title("🎯 EMI Eligibility Classification")
+    st.markdown("**Predict whether a customer is eligible for an EMI loan**")
 
-    st.markdown("# 🎯 EMI Eligibility Classification")
-    st.markdown("Predict customer EMI eligibility and risk level")
+    # Load models
+    with st.spinner("Loading classification models..."):
+        models_dict = load_all_models()
+        classification_models = models_dict.get('classification', {})
 
-    st.markdown("---")
-
-    # Get best model
-    best_model, best_scaler = get_best_classification_model(models)
-
-    if best_model is None or best_scaler is None:
-        st.error("Classification model not loaded. Please refresh the page.")
+    if not classification_models:
+        st.error("❌ No classification models available!")
         return
 
-    # Create tabs for different input methods
-    tab1, tab2 = st.tabs(["📝 Single Prediction", "📊 Batch Upload"])
+    # Model selection
+    st.sidebar.header("⚙️ Model Selection")
+    selected_model_name = st.sidebar.selectbox(
+        "Choose Classification Model:",
+        list(classification_models.keys())
+    )
 
-    with tab1:
-        st.markdown("## Enter Customer Details")
-        st.markdown("Fill in all fields to get eligibility prediction")
+    # Get selected model and scaler
+    model_data = classification_models[selected_model_name]
+    model = model_data['model']
+    scaler = model_data['scaler']
 
-        # Create columns for better layout
-        col1, col2 = st.columns(2)
+    # Input form
+    st.header("📝 Customer Information")
 
-        # Dictionary to store inputs
-        customer_data = {}
+    col1, col2, col3 = st.columns(3)
 
-        # ====================================================================
-        # DEMOGRAPHIC INFORMATION
-        # ====================================================================
+    with col1:
+        st.subheader("Personal Details")
+        age = st.number_input("Age", min_value=18, max_value=100, value=30)
+        gender = st.selectbox("Gender", ["Male", "Female"])
+        marital_status = st.selectbox("Marital Status", ["Single", "Married", "Divorced"])
+        education = st.selectbox("Education", ["High School", "Bachelor", "Master", "PhD"])
 
-        with st.expander("👤 Personal Demographics", expanded=True):
-            col1, col2 = st.columns(2)
+    with col2:
+        st.subheader("Employment Details")
+        monthly_salary = st.number_input("Monthly Salary (₹)", min_value=0, value=50000)
+        employment_type = st.selectbox("Employment Type", ["Salaried", "Self-Employed", "Business"])
+        years_of_employment = st.number_input("Years of Employment", min_value=0, max_value=50, value=5)
+        company_type = st.selectbox("Company Type", ["Private", "Government", "MNC"])
 
-            with col1:
-                age = st.slider("Age (Years)",
-                               min_value=int(FEATURE_RANGES['age'][0]),
-                               max_value=int(FEATURE_RANGES['age'][1]),
-                               value=35)
-                customer_data['age'] = age
+    with col3:
+        st.subheader("Housing Details")
+        house_type = st.selectbox("House Type", ["Rented", "Owned", "Parental"])
+        monthly_rent = st.number_input("Monthly Rent (₹)", min_value=0, value=10000)
+        family_size = st.number_input("Family Size", min_value=1, max_value=20, value=4)
+        dependents = st.number_input("Dependents", min_value=0, max_value=10, value=2)
 
-                gender = st.radio("Gender",
-                                 options=CATEGORICAL_OPTIONS['gender'])
-                customer_data['gender'] = 1 if gender == 'Male' else 0
+    # Financial Details
+    st.header("💰 Financial Information")
 
-            with col2:
-                marital_status = st.radio("Marital Status",
-                                         options=CATEGORICAL_OPTIONS['marital_status'])
-                customer_data['marital_status'] = 1 if marital_status == 'Married' else 0
+    col4, col5, col6 = st.columns(3)
 
-                education = st.selectbox("Education",
-                                        options=CATEGORICAL_OPTIONS['education'])
-                education_map = {'High School': 0, 'Graduate': 1, 'Post Graduate': 2, 'Professional': 3}
-                customer_data['education'] = education_map[education]
+    with col4:
+        st.subheader("Expenses")
+        school_fees = st.number_input("School Fees (₹)", min_value=0, value=5000)
+        college_fees = st.number_input("College Fees (₹)", min_value=0, value=0)
+        travel_expenses = st.number_input("Travel Expenses (₹)", min_value=0, value=3000)
+        groceries_utilities = st.number_input("Groceries & Utilities (₹)", min_value=0, value=8000)
 
-        # ====================================================================
-        # EMPLOYMENT & INCOME
-        # ====================================================================
+    with col5:
+        st.subheader("Other Details")
+        other_monthly_expenses = st.number_input("Other Monthly Expenses (₹)", min_value=0, value=5000)
+        existing_loans = st.number_input("Existing Loans", min_value=0, max_value=10, value=0)
+        current_emi_amount = st.number_input("Current EMI Amount (₹)", min_value=0, value=0)
 
-        with st.expander("💼 Employment & Income", expanded=True):
-            col1, col2 = st.columns(2)
+    with col6:
+        st.subheader("Financial Health")
+        credit_score = st.slider("Credit Score", min_value=300, max_value=900, value=700)
+        bank_balance = st.number_input("Bank Balance (₹)", min_value=0, value=100000)
+        emergency_fund = st.number_input("Emergency Fund (₹)", min_value=0, value=50000)
 
-            with col1:
-                monthly_salary = st.number_input("Monthly Salary (₹)",
-                                                 min_value=int(FEATURE_RANGES['monthly_salary'][0]),
-                                                 max_value=int(FEATURE_RANGES['monthly_salary'][1]),
-                                                 value=100000)
-                customer_data['monthly_salary'] = monthly_salary
+    # Encode categorical variables
+    gender_encoded = 1 if gender == "Male" else 0
+    marital_encoded = {"Single": 0, "Married": 1, "Divorced": 2}[marital_status]
+    education_encoded = {"High School": 0, "Bachelor": 1, "Master": 2, "PhD": 3}[education]
+    employment_encoded = {"Salaried": 0, "Self-Employed": 1, "Business": 2}[employment_type]
+    company_encoded = {"Private": 0, "Government": 1, "MNC": 2}[company_type]
+    house_encoded = {"Rented": 0, "Owned": 1, "Parental": 2}[house_type]
 
-                employment_type = st.selectbox("Employment Type",
-                                              options=CATEGORICAL_OPTIONS['employment_type'])
-                emp_map = {'Private': 0, 'Government': 1, 'Self-employed': 2}
-                customer_data['employment_type'] = emp_map[employment_type]
+    # Create feature array (22 features in order)
+    feature_order = [
+        'age', 'gender', 'marital_status', 'education',
+        'monthly_salary', 'employment_type', 'years_of_employment', 'company_type',
+        'house_type', 'monthly_rent', 'family_size', 'dependents',
+        'school_fees', 'college_fees', 'travel_expenses', 'groceries_utilities',
+        'other_monthly_expenses', 'existing_loans', 'current_emi_amount',
+        'credit_score', 'bank_balance', 'emergency_fund'
+    ]
 
-            with col2:
-                years_of_employment = st.number_input("Years of Employment",
-                                                       min_value=0,
-                                                       max_value=30,
-                                                       value=5)
-                customer_data['years_of_employment'] = years_of_employment
+    customer_data = {
+        'age': age,
+        'gender': gender_encoded,
+        'marital_status': marital_encoded,
+        'education': education_encoded,
+        'monthly_salary': monthly_salary,
+        'employment_type': employment_encoded,
+        'years_of_employment': years_of_employment,
+        'company_type': company_encoded,
+        'house_type': house_encoded,
+        'monthly_rent': monthly_rent,
+        'family_size': family_size,
+        'dependents': dependents,
+        'school_fees': school_fees,
+        'college_fees': college_fees,
+        'travel_expenses': travel_expenses,
+        'groceries_utilities': groceries_utilities,
+        'other_monthly_expenses': other_monthly_expenses,
+        'existing_loans': existing_loans,
+        'current_emi_amount': current_emi_amount,
+        'credit_score': credit_score,
+        'bank_balance': bank_balance,
+        'emergency_fund': emergency_fund
+    }
 
-                company_type = st.selectbox("Company Type",
-                                           options=CATEGORICAL_OPTIONS['company_type'])
-                company_map = {'Startup': 0, 'Small': 1, 'Medium': 2, 'Large': 3, 'Corporate': 4}
-                customer_data['company_type'] = company_map[company_type]
+    # Convert to array in correct order
+    input_array = np.array([customer_data[feat] for feat in feature_order])
 
-        # ====================================================================
-        # HOUSING & FAMILY
-        # ====================================================================
-
-        with st.expander("🏠 Housing & Family", expanded=False):
-            col1, col2 = st.columns(2)
-
-            with col1:
-                house_type = st.selectbox("House Type",
-                                         options=CATEGORICAL_OPTIONS['house_type'],
-                                         key="house_type")
-                house_map = {'Rented': 0, 'Own': 1, 'Family': 2}
-                customer_data['house_type'] = house_map[house_type]
-
-                monthly_rent = st.number_input("Monthly Rent (₹)",
-                                              min_value=0,
-                                              max_value=50000,
-                                              value=10000)
-                customer_data['monthly_rent'] = monthly_rent
-
-            with col2:
-                family_size = st.number_input("Family Size",
-                                             min_value=1,
-                                             max_value=8,
-                                             value=4)
-                customer_data['family_size'] = family_size
-
-                dependents = st.number_input("Number of Dependents",
-                                            min_value=0,
-                                            max_value=5,
-                                            value=1)
-                customer_data['dependents'] = dependents
-
-        # ====================================================================
-        # FINANCIAL OBLIGATIONS
-        # ====================================================================
-
-        with st.expander("💸 Monthly Financial Obligations", expanded=False):
-            col1, col2 = st.columns(2)
-
-            with col1:
-                school_fees = st.number_input("School Fees (₹)",
-                                             min_value=0,
-                                             max_value=50000,
-                                             value=5000)
-                customer_data['school_fees'] = school_fees
-
-                college_fees = st.number_input("College Fees (₹)",
-                                              min_value=0,
-                                              max_value=100000,
-                                              value=10000)
-                customer_data['college_fees'] = college_fees
-
-                travel_expenses = st.number_input("Travel Expenses (₹)",
-                                                 min_value=0,
-                                                 max_value=20000,
-                                                 value=3000)
-                customer_data['travel_expenses'] = travel_expenses
-
-            with col2:
-                groceries_utilities = st.number_input("Groceries & Utilities (₹)",
-                                                      min_value=5000,
-                                                      max_value=50000,
-                                                      value=15000)
-                customer_data['groceries_utilities'] = groceries_utilities
-
-                other_monthly_expenses = st.number_input("Other Monthly Expenses (₹)",
-                                                        min_value=0,
-                                                        max_value=30000,
-                                                        value=5000)
-                customer_data['other_monthly_expenses'] = other_monthly_expenses
-
-        # ====================================================================
-        # FINANCIAL STATUS & CREDIT
-        # ====================================================================
-
-        with st.expander("💰 Financial Status & Credit", expanded=False):
-            col1, col2 = st.columns(2)
-
-            with col1:
-                existing_loans = st.radio("Existing Loans?",
-                                         options=CATEGORICAL_OPTIONS['existing_loans'])
-                customer_data['existing_loans'] = 1 if existing_loans == 'Yes' else 0
-
-                current_emi_amount = st.number_input("Current EMI Amount (₹)",
-                                                     min_value=0,
-                                                     max_value=100000,
-                                                     value=10000)
-                customer_data['current_emi_amount'] = current_emi_amount
-
-            with col2:
-                credit_score = st.number_input("Credit Score",
-                                              min_value=300,
-                                              max_value=850,
-                                              value=700)
-                customer_data['credit_score'] = credit_score
-
-                bank_balance = st.number_input("Bank Balance (₹)",
-                                              min_value=0,
-                                              max_value=1000000,
-                                              value=200000)
-                customer_data['bank_balance'] = bank_balance
-
-            emergency_fund = st.number_input("Emergency Fund (₹)",
-                                            min_value=0,
-                                            max_value=500000,
-                                            value=100000)
-            customer_data['emergency_fund'] = emergency_fund
-
-        st.markdown("---")
-
-        # ====================================================================
-        # MAKE PREDICTION
-        # ====================================================================
-
-        if st.button("🚀 Get EMI Eligibility Prediction", use_container_width=True, type="primary"):
-            # Convert to array in correct order
-            # Convert to array
-        feature_order = [
-            'age', 'gender', 'marital_status', 'education',
-            'monthly_salary', 'employment_type', 'years_of_employment', 'company_type',
-            'house_type', 'monthly_rent', 'family_size', 'dependents',
-            'school_fees', 'college_fees', 'travel_expenses', 'groceries_utilities',
-            'other_monthly_expenses', 'existing_loans', 'current_emi_amount',
-            'credit_score', 'bank_balance', 'emergency_fund'
-        ]
-
-        input_array = np.array([customer_data[feat] for feat in feature_order])
-
-        # VALIDATE: Must be exactly 22 features
-        if not validate_features(input_array):
-            st.error("❌ Cannot make prediction - feature count mismatch")
-        else:
-        # Make prediction
-        result = predict_emi_eligibility(best_model, best_scaler, input_array)
+    # Predict button
+    if st.button("🔮 Predict EMI Eligibility", type="primary", use_container_width=True):
+        with st.spinner("Making prediction..."):
+            result = predict_emi_eligibility(model, scaler, input_array)
 
             if result.get('success', False):
                 st.success("✅ Prediction completed successfully!")
 
-                # Display prediction
-                col1, col2 = st.columns([1, 1])
+                # Display results
+                col_res1, col_res2 = st.columns(2)
 
-                with col1:
-                    display_eligibility_status(result['class_name'])
+                with col_res1:
+                    eligibility = "Eligible ✅" if result['prediction'] == 1 else "Not Eligible ❌"
+                    st.metric("EMI Eligibility", eligibility)
 
-                with col2:
-                    st.markdown("### 📊 Prediction Details")
-                    st.metric("Confidence Score", f"{result['confidence']:.2f}%")
-                    st.markdown(f"**Description:** {result['description']}")
+                with col_res2:
+                    confidence = result['probability'] * 100
+                    st.metric("Confidence", f"{confidence:.2f}%")
 
-                # Display visualizations
-                st.markdown("---")
-                plot_eligibility_prediction(result)
-
-                # Display detailed probabilities
-                st.markdown("---")
-                st.markdown("### 📈 Detailed Probabilities")
-                prob_data = pd.DataFrame({
-                    'Class': ['Not Eligible', 'High Risk', 'Eligible'],
-                    'Probability (%)': [
-                        result['probabilities']['Not_Eligible'],
-                        result['probabilities']['High_Risk'],
-                        result['probabilities']['Eligible']
-                    ]
+                # Show probabilities
+                st.subheader("📊 Prediction Probabilities")
+                prob_df = pd.DataFrame({
+                    'Class': ['Not Eligible', 'Eligible'],
+                    'Probability': result['probabilities']
                 })
-                st.dataframe(prob_data, use_container_width=True, hide_index=True)
+                st.bar_chart(prob_df.set_index('Class'))
 
             else:
-                st.error(f"Error making prediction: {result.get('error', 'Unknown error')}")
+                st.error(f"❌ Prediction failed: {result.get('error', 'Unknown error')}")
 
-    with tab2:
-        st.markdown("## 📊 Batch Predictions")
-        st.markdown("Upload a CSV file with customer data for batch predictions")
-
-        uploaded_file = st.file_uploader("Choose CSV file", type="csv")
-
-        if uploaded_file is not None:
-            try:
-                df = pd.read_csv(uploaded_file)
-                st.write(f"Loaded {len(df)} records")
-                st.dataframe(df.head())
-
-                if st.button("🚀 Run Batch Predictions"):
-                    st.info("Batch prediction feature coming soon!")
-
-            except Exception as e:
-                st.error(f"Error reading file: {str(e)}")
+if __name__ == "__main__":
+    main()
