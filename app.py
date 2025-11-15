@@ -15,8 +15,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import warnings
-from pages import regression
-from pages import classification
+
 
 warnings.filterwarnings('ignore')
 
