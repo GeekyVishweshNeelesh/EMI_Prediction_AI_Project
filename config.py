@@ -22,42 +22,42 @@ APP_CONFIG = {
 
 MODEL_PATHS = {
     # Classification Models
-    "logistic_regression_base": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/01_logistic_regression_base.pkl",
-    "logistic_regression_tuned": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/01_logistic_regression_tuned.pkl",
-    "random_forest_classifier_base": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/02_random_forest_classifier_base.pkl",
-    "random_forest_classifier_tuned": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/02_random_forest_classifier_tuned.pkl",
-    "xgboost_classifier_base": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/03_xgboost_classifier_base.pkl",
-    "xgboost_classifier_bayesian": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/03_xgboost_classifier_bayesian.pkl",
-    "decision_tree_classifier": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/07_decision_tree_classifier_base.pkl",
-    "decision_tree_classifier_optimized": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/07_decision_tree_classifier_optimized.pkl",
-    "gradient_boosting_classifier": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/08_gradient_boosting_classifier_base.pkl",
-    "gradient_boosting_classifier_optimized": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/08_gradient_boosting_classifier_optimized.pkl",
+    "logistic_regression_base": "/saved_models/01_logistic_regression_base.pkl",
+    "logistic_regression_tuned": "/saved_models/01_logistic_regression_tuned.pkl",
+    "random_forest_classifier_base": "/saved_models/02_random_forest_classifier_base.pkl",
+    "random_forest_classifier_tuned": "/saved_models/02_random_forest_classifier_tuned.pkl",
+    "xgboost_classifier_base": "/saved_models/03_xgboost_classifier_base.pkl",
+    "xgboost_classifier_bayesian": "/saved_models/03_xgboost_classifier_bayesian.pkl",
+    "decision_tree_classifier": "/saved_models/07_decision_tree_classifier_base.pkl",
+    "decision_tree_classifier_optimized": "/saved_models/07_decision_tree_classifier_optimized.pkl",
+    "gradient_boosting_classifier": "//saved_models/08_gradient_boosting_classifier_base.pkl",
+    "gradient_boosting_classifier_optimized": "/saved_models/08_gradient_boosting_classifier_optimized.pkl",
 
     # Regression Models
-    "linear_regression_base": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/04_linear_regression_base.pkl",
-    "linear_regression_tuned": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/04_ridge_regression_tuned.pkl",
-    "random_forest_regressor_base": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/05_random_forest_regressor_base.pkl",
-    "random_forest_regressor_tuned": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/05_random_forest_regressor_tuned.pkl",
-    "xgboost_regressor_base": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/06_xgboost_regressor_base.pkl",
-    "xgboost_regressor_bayesian": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/06_xgboost_regressor_bayesian.pkl",
+    "linear_regression_base": "/saved_models/04_linear_regression_base.pkl",
+    "linear_regression_tuned": "/saved_models/04_ridge_regression_tuned.pkl",
+    "random_forest_regressor_base": "/saved_models/05_random_forest_regressor_base.pkl",
+    "random_forest_regressor_tuned": "/saved_models/05_random_forest_regressor_tuned.pkl",
+    "xgboost_regressor_base": "/saved_models/06_xgboost_regressor_base.pkl",
+    "xgboost_regressor_bayesian": "/saved_models/06_xgboost_regressor_bayesian.pkl",
 }
 
 SCALER_PATHS = {
     # Classification Scalers
-    "logistic_regression_base_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/01_logistic_regression_base_scaler.pkl",
-    "logistic_regression_tuned_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/01_logistic_regression_tuned_scaler.pkl",
-    "random_forest_classifier_base_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/02_random_forest_classifier_base_scaler.pkl",
-    "random_forest_classifier_tuned_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/02_random_forest_classifier_tuned_scaler.pkl",
-    "xgboost_classifier_base_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/03_xgboost_classifier_base_scaler.pkl",
-    "xgboost_classifier_bayesian_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/03_xgboost_classifier_bayesian_scaler.pkl",
+    "logistic_regression_base_scaler": "/saved_models/01_logistic_regression_base_scaler.pkl",
+    "logistic_regression_tuned_scaler": "/saved_models/01_logistic_regression_tuned_scaler.pkl",
+    "random_forest_classifier_base_scaler": "/saved_models/02_random_forest_classifier_base_scaler.pkl",
+    "random_forest_classifier_tuned_scaler": "/saved_models/02_random_forest_classifier_tuned_scaler.pkl",
+    "xgboost_classifier_base_scaler": "/saved_models/03_xgboost_classifier_base_scaler.pkl",
+    "xgboost_classifier_bayesian_scaler": "/saved_models/03_xgboost_classifier_bayesian_scaler.pkl",
 
     # Regression Scalers
-    "linear_regression_base_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/04_linear_regression_base_scaler.pkl",
-    "linear_regression_tuned_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/04_ridge_regression_tuned_scaler.pkl",
-    "random_forest_regressor_base_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/05_random_forest_regressor_base_scaler.pkl",
-    "random_forest_regressor_tuned_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/05_random_forest_regressor_tuned_scaler.pkl",
-    "xgboost_regressor_base_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/06_xgboost_regressor_base_scaler.pkl",
-    "xgboost_regressor_bayesian_scaler": "/home/vishwesh/Documents/Labmentix_Internship/Project_12/EMI_Prediction_AI_Project/saved_models/06_xgboost_regressor_bayesian_scaler.pkl",
+    "linear_regression_base_scaler": "/saved_models/04_linear_regression_base_scaler.pkl",
+    "linear_regression_tuned_scaler": "/saved_models/04_ridge_regression_tuned_scaler.pkl",
+    "random_forest_regressor_base_scaler": "/saved_models/05_random_forest_regressor_base_scaler.pkl",
+    "random_forest_regressor_tuned_scaler": "/saved_models/05_random_forest_regressor_tuned_scaler.pkl",
+    "xgboost_regressor_base_scaler": "/saved_models/06_xgboost_regressor_base_scaler.pkl",
+    "xgboost_regressor_bayesian_scaler": "/saved_models/06_xgboost_regressor_bayesian_scaler.pkl",
 }
 
 # ============================================================================
