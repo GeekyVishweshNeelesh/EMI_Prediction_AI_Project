@@ -22,16 +22,16 @@ APP_CONFIG = {
 
 MODEL_PATHS = {
     # Classification Models
-    "logistic_regression_base": "/saved_models/01_logistic_regression_base.pkl",
-    "logistic_regression_tuned": "/saved_models/01_logistic_regression_tuned.pkl",
-    "random_forest_classifier_base": "/saved_models/02_random_forest_classifier_base.pkl",
-    "random_forest_classifier_tuned": "/saved_models/02_random_forest_classifier_tuned.pkl",
-    "xgboost_classifier_base": "/saved_models/03_xgboost_classifier_base.pkl",
-    "xgboost_classifier_bayesian": "/saved_models/03_xgboost_classifier_bayesian.pkl",
-    "decision_tree_classifier": "/saved_models/07_decision_tree_classifier_base.pkl",
-    "decision_tree_classifier_optimized": "/saved_models/07_decision_tree_classifier_optimized.pkl",
-    "gradient_boosting_classifier": "//saved_models/08_gradient_boosting_classifier_base.pkl",
-    "gradient_boosting_classifier_optimized": "/saved_models/08_gradient_boosting_classifier_optimized.pkl",
+    "logistic_regression_base": "saved_models/01_logistic_regression_base.pkl",
+    "logistic_regression_tuned": "saved_models/01_logistic_regression_tuned.pkl",
+    "random_forest_classifier_base": "saved_models/02_random_forest_classifier_base.pkl",
+    "random_forest_classifier_tuned": "saved_models/02_random_forest_classifier_tuned.pkl",
+    "xgboost_classifier_base": "saved_models/03_xgboost_classifier_base.pkl",
+    "xgboost_classifier_bayesian": "saved_models/03_xgboost_classifier_bayesian.pkl",
+    "decision_tree_classifier": "saved_models/07_decision_tree_classifier_base.pkl",
+    "decision_tree_classifier_optimized": "saved_models/07_decision_tree_classifier_optimized.pkl",
+    "gradient_boosting_classifier": "saved_models/08_gradient_boosting_classifier_base.pkl",
+    "gradient_boosting_classifier_optimized": "saved_models/08_gradient_boosting_classifier_optimized.pkl",
 
     # Regression Models
     "linear_regression_base": "/saved_models/04_linear_regression_base.pkl",
