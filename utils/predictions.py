@@ -1,11 +1,7 @@
 """
 utils/predictions.py - Make predictions using loaded models
 
-This module handles:
-- Preparing input data for models
-- Making classification predictions
-- Making regression predictions
-- Formatting prediction results
+FIXED: Now handles feature mismatch by using correct 22 features
 """
 
 import numpy as np
@@ -21,23 +17,25 @@ def prepare_classification_input(input_data, scaler):
     """
     Prepare input data for classification model
 
-    Parameters:
-    -----------
-    input_data : np.array or pd.DataFrame
-        Input features for prediction
-    scaler : object
-        Scaler object to scale features
-
-    Returns:
-    --------
-    np.array : Scaled input data
+    FIXED: Only uses 22 features (not 25)
     """
     try:
+        # Ensure we have exactly 22 features
+        if len(input_data) != 22:
+            raise ValueError(f"Expected 22 features, got {len(input_data)}")
+
+        # Create array with 22 features
+        input_array = np.array(input_data).reshape(1, -1)
+
         # Scale the input
-        scaled_input = scaler.transform([input_data])
+        scaled_input = scaler.transform(input_array)
+
         return scaled_input
+
     except Exception as e:
         st.error(f"Error preparing classification input: {str(e)}")
+        print(f"Input features: {len(input_data)}")
+        print(f"Scaler expects: {scaler.n_features_in_}")
         return None
 
 def predict_emi_eligibility(model, scaler, input_data):
@@ -50,8 +48,8 @@ def predict_emi_eligibility(model, scaler, input_data):
         Trained classification model
     scaler : object
         Scaler for input features
-    input_data : np.array
-        Input features (22 dimensions)
+    input_data : array
+        Input features (22 features exactly)
 
     Returns:
     --------
@@ -59,6 +57,13 @@ def predict_emi_eligibility(model, scaler, input_data):
     """
 
     try:
+        # Validate input has 22 features
+        if len(input_data) != 22:
+            return {
+                'success': False,
+                'error': f'Expected 22 features, got {len(input_data)}'
+            }
+
         # Prepare input
         scaled_input = prepare_classification_input(input_data, scaler)
 
@@ -110,23 +115,25 @@ def prepare_regression_input(input_data, scaler):
     """
     Prepare input data for regression model
 
-    Parameters:
-    -----------
-    input_data : np.array or pd.DataFrame
-        Input features for prediction
-    scaler : object
-        Scaler object to scale features
-
-    Returns:
-    --------
-    np.array : Scaled input data
+    FIXED: Only uses 22 features (not 25)
     """
     try:
+        # Ensure we have exactly 22 features
+        if len(input_data) != 22:
+            raise ValueError(f"Expected 22 features, got {len(input_data)}")
+
+        # Create array with 22 features
+        input_array = np.array(input_data).reshape(1, -1)
+
         # Scale the input
-        scaled_input = scaler.transform([input_data])
+        scaled_input = scaler.transform(input_array)
+
         return scaled_input
+
     except Exception as e:
         st.error(f"Error preparing regression input: {str(e)}")
+        print(f"Input features: {len(input_data)}")
+        print(f"Scaler expects: {scaler.n_features_in_}")
         return None
 
 def predict_max_emi(model, scaler, input_data):
@@ -139,8 +146,8 @@ def predict_max_emi(model, scaler, input_data):
         Trained regression model
     scaler : object
         Scaler for input features
-    input_data : np.array
-        Input features (22 dimensions)
+    input_data : array
+        Input features (22 features exactly)
 
     Returns:
     --------
@@ -148,6 +155,13 @@ def predict_max_emi(model, scaler, input_data):
     """
 
     try:
+        # Validate input has 22 features
+        if len(input_data) != 22:
+            return {
+                'success': False,
+                'error': f'Expected 22 features, got {len(input_data)}'
+            }
+
         # Prepare input
         scaled_input = prepare_regression_input(input_data, scaler)
 
@@ -198,7 +212,7 @@ def batch_predict_eligibility(model, scaler, data_df):
     scaler : object
         Scaler object
     data_df : pd.DataFrame
-        DataFrame with multiple customers
+        DataFrame with multiple customers (must have 22 features)
 
     Returns:
     --------
@@ -206,8 +220,16 @@ def batch_predict_eligibility(model, scaler, data_df):
     """
 
     try:
+        # Check if DataFrame has 22 features
+        if data_df.shape[1] < 22:
+            st.error(f"DataFrame has {data_df.shape[1]} features, expected at least 22")
+            return None
+
+        # Use only first 22 features
+        X = data_df.iloc[:, :22].values
+
         # Prepare data
-        X_scaled = scaler.transform(data_df)
+        X_scaled = scaler.transform(X)
 
         # Make predictions
         predictions = model.predict(X_scaled)
@@ -237,7 +259,7 @@ def batch_predict_emi(model, scaler, data_df):
     scaler : object
         Scaler object
     data_df : pd.DataFrame
-        DataFrame with multiple customers
+        DataFrame with multiple customers (must have 22 features)
 
     Returns:
     --------
@@ -245,8 +267,16 @@ def batch_predict_emi(model, scaler, data_df):
     """
 
     try:
+        # Check if DataFrame has 22 features
+        if data_df.shape[1] < 22:
+            st.error(f"DataFrame has {data_df.shape[1]} features, expected at least 22")
+            return None
+
+        # Use only first 22 features
+        X = data_df.iloc[:, :22].values
+
         # Prepare data
-        X_scaled = scaler.transform(data_df)
+        X_scaled = scaler.transform(X)
 
         # Make predictions
         predictions = model.predict(X_scaled)
@@ -293,9 +323,6 @@ def calculate_emi_breakdown(max_emi, tenure_months, interest_rate=12):
         monthly_rate = interest_rate / 100 / 12
 
         # Calculate principal using EMI formula
-        # EMI = P * r * (1+r)^n / ((1+r)^n - 1)
-        # P = EMI * ((1+r)^n - 1) / (r * (1+r)^n)
-
         if monthly_rate > 0:
             denominator = (1 + monthly_rate) ** tenure_months
             principal = max_emi * (denominator - 1) / (monthly_rate * denominator)
@@ -345,4 +372,24 @@ def validate_prediction(prediction_result):
     if prediction_result.get('success', False):
         return True
     else:
+        return False
+
+def validate_features(features_array):
+    """
+    Validate that features array has exactly 22 features
+
+    Parameters:
+    -----------
+    features_array : array-like
+        Features array to validate
+
+    Returns:
+    --------
+    bool : True if valid (22 features), False otherwise
+    """
+
+    if len(features_array) == 22:
+        return True
+    else:
+        st.error(f"❌ Feature mismatch: Expected 22 features, got {len(features_array)}")
         return False

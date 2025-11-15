@@ -224,19 +224,24 @@ def main(models):
 
         if st.button("🚀 Get EMI Eligibility Prediction", use_container_width=True, type="primary"):
             # Convert to array in correct order
-            feature_order = [
-                'age', 'gender', 'marital_status', 'education',
-                'monthly_salary', 'employment_type', 'years_of_employment', 'company_type',
-                'house_type', 'monthly_rent', 'family_size', 'dependents',
-                'school_fees', 'college_fees', 'travel_expenses', 'groceries_utilities',
-                'other_monthly_expenses', 'existing_loans', 'current_emi_amount',
-                'credit_score', 'bank_balance', 'emergency_fund'
-            ]
+            # Convert to array
+        feature_order = [
+            'age', 'gender', 'marital_status', 'education',
+            'monthly_salary', 'employment_type', 'years_of_employment', 'company_type',
+            'house_type', 'monthly_rent', 'family_size', 'dependents',
+            'school_fees', 'college_fees', 'travel_expenses', 'groceries_utilities',
+            'other_monthly_expenses', 'existing_loans', 'current_emi_amount',
+            'credit_score', 'bank_balance', 'emergency_fund'
+        ]
 
-            input_array = np.array([customer_data[feat] for feat in feature_order])
+        input_array = np.array([customer_data[feat] for feat in feature_order])
 
-            # Make prediction
-            result = predict_emi_eligibility(best_model, best_scaler, input_array)
+        # VALIDATE: Must be exactly 22 features
+        if not validate_features(input_array):
+            st.error("❌ Cannot make prediction - feature count mismatch")
+        else:
+        # Make prediction
+        result = predict_emi_eligibility(best_model, best_scaler, input_array)
 
             if result.get('success', False):
                 st.success("✅ Prediction completed successfully!")
