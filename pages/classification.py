@@ -5,17 +5,18 @@ pages/classification.py - EMI Eligibility Classification Page
 import streamlit as st
 import numpy as np
 import pandas as pd
-from utils.model_loader import load_all_models
 from utils.predictions import predict_emi_eligibility
 
-def main():
+def main(models=None):  # ← Added models parameter with default None
     st.title("🎯 EMI Eligibility Classification")
     st.markdown("**Predict whether a customer is eligible for an EMI loan**")
 
-    # Load models
-    with st.spinner("Loading classification models..."):
-        models_dict = load_all_models()
-        classification_models = models_dict.get('classification', {})
+    # Load models if not provided
+    if models is None:
+        from utils.model_loader import load_all_models
+        models = load_all_models()
+
+    classification_models = models.get('classification', {})
 
     if not classification_models:
         st.error("❌ No classification models available!")

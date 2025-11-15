@@ -5,17 +5,18 @@ pages/regression.py - Maximum EMI Amount Prediction Page
 import streamlit as st
 import numpy as np
 import pandas as pd
-from utils.model_loader import load_all_models
 from utils.predictions import predict_max_emi
 
-def main():
+def main(models=None):  # ← Added models parameter with default None
     st.title("💰 Maximum EMI Amount Prediction")
     st.markdown("**Predict the maximum EMI amount a customer can afford**")
 
-    # Load models
-    with st.spinner("Loading regression models..."):
-        models_dict = load_all_models()
-        regression_models = models_dict.get('regression', {})
+    # Load models if not provided
+    if models is None:
+        from utils.model_loader import load_all_models
+        models = load_all_models()
+
+    regression_models = models.get('regression', {})
 
     if not regression_models:
         st.error("❌ No regression models available!")
