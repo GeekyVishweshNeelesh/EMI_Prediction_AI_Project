@@ -305,38 +305,106 @@ def main(models=None):
         st.dataframe(summary_df, use_container_width=True)
 
     # Predict button
-    if st.button("🔮 Predict EMI Eligibility", type="primary", use_container_width=True):
-        with st.spinner("Making prediction..."):
-            result = predict_emi_eligibility(model, scaler, input_array)
+        if st.button("🔮 Predict EMI Eligibility", type="primary", use_container_width=True):
+            with st.spinner("Making prediction..."):
+        result = predict_emi_eligibility(model, scaler, input_array)
 
-            if result.get('success', False):
-                st.success("✅ Prediction completed successfully!")
+        if result.get('success', False):
+            st.success("✅ Prediction completed successfully!")
 
-                # Display results in columns
-                col_res1, col_res2 = st.columns(2)
+            # Display results in columns
+            col_res1, col_res2 = st.columns(2)
 
-                with col_res1:
-                    eligibility = result['prediction']
-                    if eligibility == 1:
-                        st.success("### ✅ ELIGIBLE for EMI")
-                    else:
-                        st.error("### ❌ NOT ELIGIBLE for EMI")
+            with col_res1:
+                eligibility = result['prediction']
+                if eligibility == 1:
+                    st.success("### ✅ ELIGIBLE for EMI")
+                else:
+                    st.error("### ❌ NOT ELIGIBLE for EMI")
 
-                with col_res2:
-                    confidence = result['probability'] * 100
-                    st.metric(
-                        "Prediction Confidence",
-                        f"{confidence:.2f}%",
-                        help="Model's confidence in this prediction"
-                    )
+            with col_res2:
+                confidence = result['probability'] * 100
+                st.metric(
+                    "Prediction Confidence",
+                    f"{confidence:.2f}%",
+                    help="Model's confidence in this prediction"
+                )
 
-                # Show detailed probabilities
-                st.markdown("---")
-                st.subheader("📊 Prediction Probabilities")
+            # Show detailed probabilities
+            st.markdown("---")
+            st.subheader("📊 Prediction Probabilities")
+
+            # Safely get probabilities
+            probabilities = result.get('probabilities', [0.5, 0.5])
+
+            # Ensure we have exactly 2 probabilities
+            if isinstance(probabilities, (list, tuple, np.ndarray)):
+                if len(probabilities) == 2:
+                    prob_not_eligible = float(probabilities[0])
+                    prob_eligible = float(probabilities[1])
+                elif len(probabilities) == 1:
+                    prob_eligible = float(probabilities[0])
+                    prob_not_eligible = 1.0 - prob_eligible
+                else:
+                    prob_not_eligible = 0.5
+                    prob_eligible = 0.5
+            else:
+                prob_not_eligible = 0.5
+                prob_eligible = 0.5
+
+            # Create DataFrame with guaranteed 2 values
+            prob_df = pd.DataFrame({
+                'Eligibility': ['Not Eligible', 'Eligible'],
+                'Probability': [prob_not_eligible, prob_eligible]
+            })
+
+            # Display as bar chart
+            st.bar_chart(prob_df.set_index('Eligibility'))
+
+            # Display as table
+            st.dataframe(prob_df, use_container_width=True)
+
+            # Additional insights
+            st.markdown("---")
+            st.subheader("💡 Financial Insights")
+
+            total_monthly_expenses = (
+                school_fees + college_fees + travel_expenses +
+                groceries_utilities + other_monthly_expenses + current_emi_amount
+            )
+
+            disposable_income = monthly_salary - total_monthly_expenses
+
+            col_insight1, col_insight2, col_insight3 = st.columns(3)
+
+            with col_insight1:
+                st.metric("Total Monthly Expenses", f"₹{total_monthly_expenses:,.0f}")
+
+            with col_insight2:
+                st.metric("Disposable Income", f"₹{disposable_income:,.0f}")
+
+            with col_insight3:
+                expense_ratio = (total_monthly_expenses / monthly_salary * 100) if monthly_salary > 0 else 0
+                st.metric("Expense Ratio", f"{expense_ratio:.1f}%")
+
+        else:
+            st.error(f"❌ Prediction failed: {result.get('error', 'Unknown error')}")
+
+            # Show detailed error if available
+            if 'details' in result:
+                with st.expander("🔍 Error Details"):
+                    st.code(result['details'])
+
+            st.info("Please check your input values and try again.")
+
+               # Ensure probabilities has exactly 2 values
+                probabilities = result.get('probabilities', [0.5, 0.5])
+                if len(probabilities) != 2:
+                    probabilities = [probabilities[0], 1 - probabilities[0]] if len(probabilities) == 1 else [0.5, 0.5]
 
                 prob_df = pd.DataFrame({
                     'Eligibility': ['Not Eligible', 'Eligible'],
-                    'Probability': result['probabilities']
+                    'Probability': probabilities
                 })
 
                 # Display as bar chart
