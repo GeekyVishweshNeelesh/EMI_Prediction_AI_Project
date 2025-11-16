@@ -1,217 +1,151 @@
 """
-EMIPredict AI - Intelligent Financial Risk Assessment Platform
-Main Application Entry Point (app.py)
+app.py - Main Streamlit Application for EMI Prediction AI
 
-This file serves as the main hub that handles:
-- Page configuration
-- Sidebar navigation
-- Page routing to different features
-- Global model loading and caching
-- Application theming
+This is the main entry point for the EMI Prediction application.
+It handles page navigation and loads the appropriate page based on user selection.
 """
 
 import streamlit as st
-import pandas as pd
-import numpy as np
-from datetime import datetime
-import warnings
-
-
-warnings.filterwarnings('ignore')
+from utils.model_loader import load_all_models
 
 # ============================================================================
 # PAGE CONFIGURATION
 # ============================================================================
 
 st.set_page_config(
-    page_title="EMIPredict AI",
+    page_title="EMI Predictor AI",
     page_icon="💰",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    menu_items={
+        'About': "# EMI Predictor AI\nFinancial Risk Assessment Platform"
+    }
 )
 
 # ============================================================================
-# CUSTOM STYLING
+# LOAD MODELS (CACHED)
 # ============================================================================
 
-st.markdown("""
-    <style>
-    .main {
-        padding: 20px;
-    }
-
-    .stTabs [data-baseweb="tab-list"] button {
-        font-size: 16px;
-        font-weight: bold;
-    }
-
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 20px;
-        border-radius: 10px;
-        margin: 10px 0;
-    }
-
-    .success-box {
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        border-radius: 5px;
-        padding: 15px;
-        margin: 10px 0;
-    }
-
-    .error-box {
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        border-radius: 5px;
-        padding: 15px;
-        margin: 10px 0;
-    }
-
-    .warning-box {
-        background-color: #fff3cd;
-        border: 1px solid #ffeaa7;
-        border-radius: 5px;
-        padding: 15px;
-        margin: 10px 0;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+@st.cache_resource
+def load_models():
+    """Load all models once and cache them"""
+    return load_all_models()
 
 # ============================================================================
-# SIDEBAR CONFIGURATION
+# SIDEBAR NAVIGATION (AT THE TOP)
 # ============================================================================
 
 with st.sidebar:
-    # Logo and Title
-    st.markdown("# 💰 EMIPredict AI")
-    st.markdown("### Intelligent Financial Risk Assessment Platform")
+    st.title("💰 EMI Predictor AI")
     st.markdown("---")
 
-    # Navigation Menu
-    st.markdown("## 📍 NAVIGATION")
-    selected_page = st.radio(
+    # Navigation Menu at the top
+    st.header("📍 Navigation")
+
+    page = st.radio(
         "Choose a page:",
-        ["🏠 Home",
-         "🎯 EMI Classification",
-         "💸 EMI Amount Prediction",
-         "📊 Model Comparison",
-         "⚙️ Admin Panel"],
-        key="page_selector"
+        [
+            "🏠 Home",
+            "🎯 Classification",
+            "💰 Regression",
+            "📊 Model Comparison",
+            "⚙️ Admin Panel"
+        ],
+        label_visibility="collapsed"
     )
 
     st.markdown("---")
 
     # Project Information
-    st.markdown("## 📊 PROJECT INFORMATION")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Total Records", "400K")
-        st.metric("Features", "22")
-    with col2:
-        st.metric("ML Models", "8")
-        st.metric("Predictions", "Dual Task")
-
-    st.markdown("---")
-
-    # Model Information
-    st.markdown("## 🤖 BEST MODELS")
+    st.subheader("📊 Project Info")
     st.info("""
-    **Classification:**
-    - Model: XGBoost (Bayesian)
-    - Accuracy: 95.90%
-    - ROC-AUC: 0.9962
-
-    **Regression:**
-    - Model: XGBoost (Bayesian)
-    - RMSE: ₹973.08
-    - R² Score: 0.9840
+    **Dataset:** 400K+ Records
+    **Models:** 8 ML Models
+    **Features:** 22 Input Features
+    **Tasks:** Classification & Regression
     """)
 
     st.markdown("---")
 
-    # Quick Links
-    st.markdown("## 🔗 QUICK LINKS")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("[📚 Docs](#)", unsafe_allow_html=True)
-    with col2:
-        st.markdown("[🐙 GitHub](#)", unsafe_allow_html=True)
-    with col3:
-        st.markdown("[📧 Contact](#)", unsafe_allow_html=True)
+    # Model Status
+    st.subheader("🤖 Model Status")
+    with st.spinner("Loading models..."):
+        try:
+            models = load_models()
+
+            # Count available models
+            num_classification = len(models.get('classification', {}))
+            num_regression = len(models.get('regression', {}))
+
+            if num_classification > 0:
+                st.success(f"✅ {num_classification} Classification Models")
+            else:
+                st.error("❌ No Classification Models")
+
+            if num_regression > 0:
+                st.success(f"✅ {num_regression} Regression Models")
+            else:
+                st.error("❌ No Regression Models")
+
+        except Exception as e:
+            st.error(f"❌ Error loading models: {str(e)}")
+            models = {'classification': {}, 'regression': {}}
+
+    st.markdown("---")
+
+    # Quick Stats
+    st.subheader("📈 Quick Stats")
+    st.metric("Total Models", num_classification + num_regression)
+    st.metric("Data Points", "400K+")
+    st.metric("Accuracy", ">90%")
 
     st.markdown("---")
 
     # Footer
-    st.markdown("""
-    <div style='text-align: center; margin-top: 30px; color: #888;'>
-        <p><small>EMIPredict AI v1.0</small></p>
-        <p><small>Powered by XGBoost & Streamlit</small></p>
-        <p><small>© 2024 Financial Risk Assessment</small></p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.caption("© 2024 EMI Predictor AI")
+    st.caption("Built with Streamlit & MLflow")
 
 # ============================================================================
-# LOAD MODELS (CACHED FOR PERFORMANCE)
+# PAGE ROUTING
 # ============================================================================
 
-@st.cache_resource
-def load_all_models():
-    """
-    Load all 8 ML models and their scalers
-    Models are cached to avoid reloading on every page change
-    """
-    from utils.model_loader import load_models
-    return load_models()
-
-# Load models at startup
-try:
-    models = load_all_models()
-    models_loaded = True
-except Exception as e:
-    st.error(f"Error loading models: {str(e)}")
-    models_loaded = False
-    models = None
-
-# ============================================================================
-# PAGE ROUTING LOGIC
-# ============================================================================
-
-if selected_page == "🏠 Home":
+# Route to the selected page
+if page == "🏠 Home":
+    # Import and run home page
     from pages import home
     home.main()
 
-elif selected_page == "🎯 EMI Classification":
+elif page == "🎯 Classification":
+    # Import and run classification page
     from pages import classification
-    if models_loaded:
-        classification.main(models)
-    else:
-        st.error("Models not loaded. Please refresh the page.")
+    classification.main(models)
 
-elif selected_page == "💸 EMI Amount Prediction":
+elif page == "💰 Regression":
+    # Import and run regression page
     from pages import regression
-    if models_loaded:
-        regression.main(models)
-    else:
-        st.error("Models not loaded. Please refresh the page.")
+    regression.main(models)
 
-elif selected_page == "📊 Model Comparison":
+elif page == "📊 Model Comparison":
+    # Import and run model comparison page
     from pages import model_comparison
-    model_comparison.main()
+    model_comparison.main(models)
 
-elif selected_page == "⚙️ Admin Panel":
+elif page == "⚙️ Admin Panel":
+    # Import and run admin panel page
     from pages import admin
-    admin.main(models)
+    admin.main()
 
 # ============================================================================
-# FOOTER
+# FOOTER (MAIN CONTENT AREA)
 # ============================================================================
 
 st.markdown("---")
-st.markdown("""
-<div style='text-align: center; color: #888; margin-top: 50px;'>
-    <p><small>EMIPredict AI - Intelligent Financial Risk Assessment Platform</small></p>
-    <p><small>Last Updated: """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """</small></p>
-    <p><small>For questions or support, please contact the development team.</small></p>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div style='text-align: center; color: #666; padding: 20px;'>
+        <p>EMI Predictor AI | Machine Learning for Financial Risk Assessment</p>
+        <p>Powered by XGBoost, Random Forest, and Advanced ML Algorithms</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
