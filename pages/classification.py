@@ -7,19 +7,31 @@ import numpy as np
 import pandas as pd
 from utils.predictions import predict_emi_eligibility
 
-def main(models=None):  # ← Added models parameter with default None
+def main(models=None):
     st.title("🎯 EMI Eligibility Classification")
     st.markdown("**Predict whether a customer is eligible for an EMI loan**")
 
     # Load models if not provided
     if models is None:
+        st.warning("⚠️ Loading models...")
         from utils.model_loader import load_all_models
         models = load_all_models()
 
-    classification_models = models.get('classification', {})
+    # Debug: Show what we received
+    st.write(f"🔍 DEBUG: Received models dict with keys: {models.keys() if models else 'None'}")
+
+    classification_models = models.get('classification', {}) if models else {}
+
+    # Debug: Show classification models
+    st.write(f"🔍 DEBUG: Classification models available: {list(classification_models.keys())}")
 
     if not classification_models:
         st.error("❌ No classification models available!")
+        st.info("💡 Please check if model files exist in 'saved_models/' folder")
+
+        # Show what models dict contains
+        if models:
+            st.write("Models dict structure:", models)
         return
 
     # Model selection

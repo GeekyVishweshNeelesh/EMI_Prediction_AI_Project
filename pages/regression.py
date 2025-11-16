@@ -7,19 +7,31 @@ import numpy as np
 import pandas as pd
 from utils.predictions import predict_max_emi
 
-def main(models=None):  # ← Added models parameter with default None
+def main(models=None):
     st.title("💰 Maximum EMI Amount Prediction")
     st.markdown("**Predict the maximum EMI amount a customer can afford**")
 
     # Load models if not provided
     if models is None:
+        st.warning("⚠️ Loading models...")
         from utils.model_loader import load_all_models
         models = load_all_models()
 
-    regression_models = models.get('regression', {})
+    # Debug: Show what we received
+    st.write(f"🔍 DEBUG: Received models dict with keys: {models.keys() if models else 'None'}")
+
+    regression_models = models.get('regression', {}) if models else {}
+
+    # Debug: Show regression models
+    st.write(f"🔍 DEBUG: Regression models available: {list(regression_models.keys())}")
 
     if not regression_models:
         st.error("❌ No regression models available!")
+        st.info("💡 Please check if model files exist in 'saved_models/' folder")
+
+        # Show what models dict contains
+        if models:
+            st.write("Models dict structure:", models)
         return
 
     # Model selection
