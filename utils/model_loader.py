@@ -23,7 +23,7 @@ def get_models_path():
     possible_paths = [
         Path("saved_models"),                                      # Relative to project root
         Path(__file__).parent.parent / "saved_models",            # Relative to this file
-        Path("/mount/src/emi_prediction_ai_project/saved_models") # Streamlit Cloud absolute
+        Path("/mount/src/emi_prediction_ai_project/saved_models/") # Streamlit Cloud absolute
     ]
 
     for path in possible_paths:
