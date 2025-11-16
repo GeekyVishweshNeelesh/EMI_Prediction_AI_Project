@@ -307,7 +307,7 @@ def main(models=None):
     # Predict button
         if st.button("🔮 Predict EMI Eligibility", type="primary", use_container_width=True):
             with st.spinner("Making prediction..."):
-        result = predict_emi_eligibility(model, scaler, input_array)
+                result = predict_emi_eligibility(model, scaler, input_array)
 
         if result.get('success', False):
             st.success("✅ Prediction completed successfully!")
