@@ -3,12 +3,9 @@ pandas
 numpy
 scikit-learn
 xgboost
-joblib
+plotly
 matplotlib
 seaborn
-plotly
-shap
+joblib
+openpyxl
 mlflow
-requests
-python-dateutil
-pytz

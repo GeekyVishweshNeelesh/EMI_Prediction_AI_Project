@@ -5,7 +5,21 @@ This is the main entry point for the EMI Prediction application.
 It handles page navigation and loads the appropriate page based on user selection.
 """
 
+# ============================================================================
+# IMPORTS
+# ============================================================================
+
 import streamlit as st
+import pandas as pd
+import numpy as np
+import pickle
+import warnings
+from pathlib import Path
+
+# Suppress warnings
+warnings.filterwarnings('ignore')
+
+# Import utility functions
 from utils.model_loader import load_all_models
 
 # ============================================================================
@@ -23,13 +37,35 @@ st.set_page_config(
 )
 
 # ============================================================================
+# CUSTOM CSS (OPTIONAL)
+# ============================================================================
+
+st.markdown("""
+    <style>
+    .main {
+        padding: 0rem 1rem;
+    }
+    .stButton>button {
+        width: 100%;
+    }
+    div[data-testid="stMetricValue"] {
+        font-size: 28px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ============================================================================
 # LOAD MODELS (CACHED)
 # ============================================================================
 
 @st.cache_resource
 def load_models():
     """Load all models once and cache them"""
-    return load_all_models()
+    try:
+        return load_all_models()
+    except Exception as e:
+        st.error(f"Error loading models: {str(e)}")
+        return {'classification': {}, 'regression': {}}
 
 # ============================================================================
 # SIDEBAR NAVIGATION (AT THE TOP)
@@ -90,6 +126,8 @@ with st.sidebar:
         except Exception as e:
             st.error(f"❌ Error loading models: {str(e)}")
             models = {'classification': {}, 'regression': {}}
+            num_classification = 0
+            num_regression = 0
 
     st.markdown("---")
 
@@ -109,31 +147,36 @@ with st.sidebar:
 # PAGE ROUTING
 # ============================================================================
 
-# Route to the selected page
-if page == "🏠 Home":
-    # Import and run home page
-    from pages import home
-    home.main()
+try:
+    # Route to the selected page
+    if page == "🏠 Home":
+        # Import and run home page
+        from pages import home
+        home.main()
 
-elif page == "🎯 Classification":
-    # Import and run classification page
-    from pages import classification
-    classification.main(models)
+    elif page == "🎯 Classification":
+        # Import and run classification page
+        from pages import classification
+        classification.main(models)
 
-elif page == "💰 Regression":
-    # Import and run regression page
-    from pages import regression
-    regression.main(models)
+    elif page == "💰 Regression":
+        # Import and run regression page
+        from pages import regression
+        regression.main(models)
 
-elif page == "📊 Model Comparison":
-    # Import and run model comparison page
-    from pages import model_comparison
-    model_comparison.main(models)
+    elif page == "📊 Model Comparison":
+        # Import and run model comparison page
+        from pages import model_comparison
+        model_comparison.main(models)
 
-elif page == "⚙️ Admin Panel":
-    # Import and run admin panel page
-    from pages import admin
-    admin.main()
+    elif page == "⚙️ Admin Panel":
+        # Import and run admin panel page
+        from pages import admin
+        admin.main()
+
+except Exception as e:
+    st.error(f"❌ Error loading page: {str(e)}")
+    st.exception(e)
 
 # ============================================================================
 # FOOTER (MAIN CONTENT AREA)
