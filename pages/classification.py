@@ -171,9 +171,16 @@ def main(models=None):
         })
         st.dataframe(summary_df, use_container_width=True)
 
+<<<<<<< HEAD
     if st.button("🔮 Predict EMI Eligibility", type="primary", use_container_width=True):
         with st.spinner("Making prediction..."):
             result = predict_emi_eligibility(model, scaler, input_array)
+=======
+    # Predict button
+        if st.button("🔮 Predict EMI Eligibility", type="primary", use_container_width=True):
+            with st.spinner("Making prediction..."):
+                result = predict_emi_eligibility(model, scaler, input_array)
+>>>>>>> 647d6fd7c05b8eee8121f5dc0333f678b9b2f20a
 
         if result.get('success', False):
             st.success("✅ Prediction completed successfully!")
