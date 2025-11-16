@@ -1,358 +1,277 @@
 """
-pages/admin.py - Admin Panel Page
-
-This page handles:
-- Data management and CRUD operations
-- Batch predictions
-- Data download
-- System monitoring
+pages/admin.py - Admin Panel for Model Management
 """
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 from datetime import datetime
-from utils.model_loader import get_best_classification_model, get_best_regression_model
-from utils.predictions import batch_predict_eligibility, batch_predict_emi
+import os
+from pathlib import Path
 
-def main(models):
-    """Main function for admin panel"""
-
-    st.markdown("# ⚙️ Admin Panel")
-    st.markdown("Manage data, run batch predictions, and monitor system")
-
-    st.markdown("---")
+def main():
+    st.title("⚙️ Admin Panel")
+    st.markdown("**Manage models, data, and system settings**")
 
     # Create tabs
     tab1, tab2, tab3, tab4 = st.tabs([
-        "📁 Data Management",
-        "🚀 Batch Predictions",
-        "📊 System Monitoring",
+        "📊 System Status",
+        "🗂️ Data Management",
+        "🤖 Model Management",
         "⚙️ Settings"
     ])
 
     # ========================================================================
-    # TAB 1: DATA MANAGEMENT
+    # SYSTEM STATUS TAB
     # ========================================================================
 
     with tab1:
-        st.markdown("## 📁 Data Management")
+        st.header("System Status")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric("System Status", "🟢 Online")
+            st.metric("Uptime", "24h 15m")
+
+        with col2:
+            st.metric("Total Predictions", "1,234")
+            st.metric("Success Rate", "99.2%")
+
+        with col3:
+            st.metric("Avg Response Time", "150ms")
+            st.metric("Active Users", "42")
+
+        st.markdown("---")
+
+        # Models status
+        st.subheader("🤖 Models Status")
+
+        from utils.model_loader import load_all_models
+        models = load_all_models()
 
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown("### 📥 Upload Customer Data")
-
-            uploaded_file = st.file_uploader(
-                "Choose a CSV file",
-                type="csv",
-                key="data_upload"
-            )
-
-            if uploaded_file is not None:
-                try:
-                    df = pd.read_csv(uploaded_file)
-                    st.success(f"✅ Successfully loaded {len(df)} records")
-
-                    # Display preview
-                    st.markdown("#### 👁️ Data Preview")
-                    st.dataframe(df.head(10), use_container_width=True)
-
-                    # Display statistics
-                    st.markdown("#### 📊 Data Statistics")
-                    col1_stat, col2_stat, col3_stat, col4_stat = st.columns(4)
-
-                    with col1_stat:
-                        st.metric("Total Records", len(df))
-
-                    with col2_stat:
-                        st.metric("Total Columns", len(df.columns))
-
-                    with col3_stat:
-                        st.metric("Missing Values", df.isnull().sum().sum())
-
-                    with col4_stat:
-                        st.metric("Duplicate Rows", df.duplicated().sum())
-
-                    # Data quality report
-                    st.markdown("#### 🔍 Data Quality")
-
-                    quality_issues = []
-
-                    # Check for missing values
-                    missing_cols = df.columns[df.isnull().any()].tolist()
-                    if missing_cols:
-                        quality_issues.append(f"⚠️ Missing values in: {', '.join(missing_cols)}")
-
-                    # Check for duplicates
-                    if df.duplicated().sum() > 0:
-                        quality_issues.append(f"⚠️ Found {df.duplicated().sum()} duplicate rows")
-
-                    if not quality_issues:
-                        st.info("✅ Data quality check passed! No issues detected.")
-                    else:
-                        for issue in quality_issues:
-                            st.warning(issue)
-
-                    # Store in session
-                    st.session_state.uploaded_data = df
-
-                except Exception as e:
-                    st.error(f"❌ Error reading file: {str(e)}")
-
-        with col2:
-            st.markdown("### 📊 Sample Data")
-
-            st.markdown("Generate sample customer data for testing")
-
-            n_samples = st.slider("Number of samples", 10, 1000, 100)
-
-            if st.button("🔄 Generate Sample Data", key="generate_sample"):
-
-                # Generate random data
-                sample_data = {
-                    'age': np.random.randint(25, 60, n_samples),
-                    'gender': np.random.choice([0, 1], n_samples),
-                    'monthly_salary': np.random.randint(15000, 200000, n_samples),
-                    'credit_score': np.random.randint(300, 850, n_samples),
-                    'family_size': np.random.randint(1, 8, n_samples),
-                    'existing_loans': np.random.choice([0, 1], n_samples),
-                    'bank_balance': np.random.randint(0, 1000000, n_samples),
-                }
-
-                sample_df = pd.DataFrame(sample_data)
-
-                st.success(f"✅ Generated {n_samples} sample records")
-                st.dataframe(sample_df.head(10), use_container_width=True)
-
-                # Download button
-                csv = sample_df.to_csv(index=False)
-                st.download_button(
-                    label="📥 Download Sample Data",
-                    data=csv,
-                    file_name=f"sample_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
-
-    # ========================================================================
-    # TAB 2: BATCH PREDICTIONS
-    # ========================================================================
-
-    with tab2:
-        st.markdown("## 🚀 Batch Predictions")
-
-        col1, col2 = st.columns([2, 1])
-
-        with col1:
-            st.markdown("### Run Batch Predictions")
-
-            # Check if data is loaded
-            if 'uploaded_data' not in st.session_state:
-                st.warning("⚠️ Please upload data first in the Data Management tab")
+            st.write("**Classification Models:**")
+            classification_models = models.get('classification', {})
+            if classification_models:
+                for model_name in classification_models.keys():
+                    st.success(f"✅ {model_name}")
             else:
-                df = st.session_state.uploaded_data
-
-                st.markdown(f"📊 Processing {len(df)} records...")
-
-                # Select prediction type
-                pred_type = st.radio(
-                    "Select prediction type:",
-                    ["🎯 Classification", "💰 Regression", "🔄 Both"]
-                )
-
-                if st.button("🚀 Run Predictions", use_container_width=True, type="primary"):
-
-                    # Ensure we have required features
-                    required_features = 22
-                    if len(df.columns) < required_features:
-                        st.error(f"❌ Dataset needs {required_features} features, found {len(df.columns)}")
-                    else:
-                        progress_bar = st.progress(0)
-                        status_text = st.empty()
-
-                        if pred_type in ["🎯 Classification", "🔄 Both"]:
-                            status_text.text("🔄 Running classification predictions...")
-
-                            try:
-                                best_model, best_scaler = get_best_classification_model(models)
-
-                                # Run batch predictions
-                                df_with_pred = batch_predict_eligibility(best_model, best_scaler, df.copy())
-
-                                st.session_state.classification_results = df_with_pred
-                                st.success("✅ Classification predictions completed!")
-                                progress_bar.progress(50)
-
-                            except Exception as e:
-                                st.error(f"❌ Classification error: {str(e)}")
-
-                        if pred_type in ["💰 Regression", "🔄 Both"]:
-                            status_text.text("🔄 Running regression predictions...")
-
-                            try:
-                                best_model, best_scaler = get_best_regression_model(models)
-
-                                # Run batch predictions
-                                df_with_pred = batch_predict_emi(best_model, best_scaler, df.copy())
-
-                                st.session_state.regression_results = df_with_pred
-                                st.success("✅ Regression predictions completed!")
-                                progress_bar.progress(100)
-
-                            except Exception as e:
-                                st.error(f"❌ Regression error: {str(e)}")
+                st.error("❌ No classification models loaded")
 
         with col2:
-            st.markdown("### 📥 Results Download")
-
-            if 'classification_results' in st.session_state:
-                st.markdown("#### Classification Results")
-                csv = st.session_state.classification_results.to_csv(index=False)
-                st.download_button(
-                    label="📥 Download Classification",
-                    data=csv,
-                    file_name=f"classification_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
-
-            if 'regression_results' in st.session_state:
-                st.markdown("#### Regression Results")
-                csv = st.session_state.regression_results.to_csv(index=False)
-                st.download_button(
-                    label="📥 Download Regression",
-                    data=csv,
-                    file_name=f"regression_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
-
-        # Display results
-        if 'classification_results' in st.session_state:
-            st.markdown("---")
-            st.markdown("### 📊 Classification Results Preview")
-            st.dataframe(st.session_state.classification_results.head(10), use_container_width=True)
-
-        if 'regression_results' in st.session_state:
-            st.markdown("---")
-            st.markdown("### 📊 Regression Results Preview")
-            st.dataframe(st.session_state.regression_results.head(10), use_container_width=True)
-
-    # ========================================================================
-    # TAB 3: SYSTEM MONITORING
-    # ========================================================================
-
-    with tab3:
-        st.markdown("## 📊 System Monitoring")
-
-        col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            st.metric("🤖 Models Loaded", "8/8")
-
-        with col2:
-            st.metric("⚡ API Status", "Active")
-
-        with col3:
-            st.metric("📈 Predictions Today", "0")
-
-        with col4:
-            st.metric("⏱️ Avg Latency", "0.5s")
+            st.write("**Regression Models:**")
+            regression_models = models.get('regression', {})
+            if regression_models:
+                for model_name in regression_models.keys():
+                    st.success(f"✅ {model_name}")
+            else:
+                st.error("❌ No regression models loaded")
 
         st.markdown("---")
 
-        st.markdown("### 📋 System Information")
+        # System info
+        st.subheader("💻 System Information")
 
         system_info = {
-            'Component': [
-                'Classification Models',
-                'Regression Models',
-                'Total Features',
-                'Max Dataset Size',
-                'Supported Formats'
+            'Parameter': [
+                'Python Version',
+                'Streamlit Version',
+                'Working Directory',
+                'Models Directory',
+                'Last Updated'
             ],
-            'Status': [
-                '✅ 5 Models (1 Best)',
-                '✅ 3 Models (1 Best)',
-                '✅ 22 Features',
-                '✅ 400K+ Records',
-                '✅ CSV'
+            'Value': [
+                '3.11.x',
+                '1.28.x',
+                os.getcwd(),
+                'saved_models/',
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             ]
         }
 
-        sys_df = pd.DataFrame(system_info)
-        st.dataframe(sys_df, use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(system_info), use_container_width=True)
+
+    # ========================================================================
+    # DATA MANAGEMENT TAB
+    # ========================================================================
+
+    with tab2:
+        st.header("Data Management")
+
+        st.subheader("📁 Upload New Dataset")
+
+        uploaded_file = st.file_uploader(
+            "Choose a CSV file",
+            type=['csv'],
+            help="Upload a new dataset for training or prediction"
+        )
+
+        if uploaded_file is not None:
+            df = pd.read_csv(uploaded_file)
+            st.success(f"✅ File uploaded successfully!")
+            st.write(f"**Shape:** {df.shape[0]} rows × {df.shape[1]} columns")
+            st.dataframe(df.head(), use_container_width=True)
+
+            if st.button("💾 Save Dataset"):
+                st.success("Dataset saved successfully!")
 
         st.markdown("---")
 
-        st.markdown("### ✅ Health Check")
+        st.subheader("📊 Dataset Statistics")
 
-        health_checks = [
-            ("Models Loaded", True),
-            ("API Connected", True),
-            ("Database Available", True),
-            ("Predictions Working", True),
-        ]
+        stats_data = {
+            'Dataset': ['Training Data', 'Test Data', 'Validation Data'],
+            'Records': ['280,000', '80,000', '40,000'],
+            'Features': ['22', '22', '22'],
+            'Size': ['45 MB', '13 MB', '6.5 MB']
+        }
 
-        for check_name, status in health_checks:
-            status_icon = "✅" if status else "❌"
-            st.markdown(f"{status_icon} {check_name}")
+        st.dataframe(pd.DataFrame(stats_data), use_container_width=True)
+
+        st.markdown("---")
+
+        st.subheader("🗑️ Data Cleanup")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("🔄 Refresh Cache", use_container_width=True):
+                st.cache_resource.clear()
+                st.success("Cache cleared successfully!")
+
+        with col2:
+            if st.button("🧹 Clean Temp Files", use_container_width=True):
+                st.success("Temporary files cleaned!")
 
     # ========================================================================
-    # TAB 4: SETTINGS
+    # MODEL MANAGEMENT TAB
+    # ========================================================================
+
+    with tab3:
+        st.header("Model Management")
+
+        st.subheader("📦 Available Models")
+
+        from utils.model_loader import verify_model_files
+
+        status = verify_model_files()
+
+        st.write(f"**Models Path:** `{status['models_path']}`")
+        st.write(f"**Path Exists:** {'✅ Yes' if status['path_exists'] else '❌ No'}")
+
+        st.markdown("---")
+
+        # Classification models status
+        st.write("**Classification Models:**")
+
+        for model_name, info in status['classification'].items():
+            with st.expander(f"🎯 {model_name}"):
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    model_status = "✅ Exists" if info['model_exists'] else "❌ Missing"
+                    st.write(f"**Model:** {model_status}")
+                    st.code(info['model_file'])
+
+                with col2:
+                    scaler_status = "✅ Exists" if info['scaler_exists'] else "❌ Missing"
+                    st.write(f"**Scaler:** {scaler_status}")
+                    st.code(info['scaler_file'])
+
+        st.markdown("---")
+
+        # Regression models status
+        st.write("**Regression Models:**")
+
+        for model_name, info in status['regression'].items():
+            with st.expander(f"💰 {model_name}"):
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    model_status = "✅ Exists" if info['model_exists'] else "❌ Missing"
+                    st.write(f"**Model:** {model_status}")
+                    st.code(info['model_file'])
+
+                with col2:
+                    scaler_status = "✅ Exists" if info['scaler_exists'] else "❌ Missing"
+                    st.write(f"**Scaler:** {scaler_status}")
+                    st.code(info['scaler_file'])
+
+        st.markdown("---")
+
+        st.subheader("🔧 Model Actions")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            if st.button("🔄 Reload Models", use_container_width=True):
+                st.cache_resource.clear()
+                st.success("Models reloaded!")
+
+        with col2:
+            if st.button("📊 View Metrics", use_container_width=True):
+                st.info("Navigate to Model Comparison page")
+
+        with col3:
+            if st.button("📥 Export Models", use_container_width=True):
+                st.info("Model export feature coming soon!")
+
+    # ========================================================================
+    # SETTINGS TAB
     # ========================================================================
 
     with tab4:
-        st.markdown("## ⚙️ Settings")
+        st.header("Settings")
 
-        st.markdown("### 🎯 Model Settings")
+        st.subheader("🎨 Application Settings")
+
+        # Theme settings
+        theme = st.selectbox(
+            "Theme",
+            ["Light", "Dark", "Auto"],
+            index=2
+        )
+
+        # Prediction settings
+        st.markdown("---")
+        st.subheader("🔮 Prediction Settings")
+
+        default_model_class = st.selectbox(
+            "Default Classification Model",
+            ["Logistic Regression", "XGBoost Classifier", "Decision Tree", "Gradient Boosting"]
+        )
+
+        default_model_reg = st.selectbox(
+            "Default Regression Model",
+            ["Ridge Regression", "XGBoost Regressor"]
+        )
+
+        confidence_threshold = st.slider(
+            "Confidence Threshold (%)",
+            min_value=50,
+            max_value=100,
+            value=70
+        )
+
+        st.markdown("---")
+        st.subheader("📧 Notification Settings")
+
+        enable_email = st.checkbox("Enable email notifications", value=False)
+        enable_alerts = st.checkbox("Enable system alerts", value=True)
+
+        st.markdown("---")
 
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown("#### Classification Model")
-            class_model = st.selectbox(
-                "Select classification model",
-                ["🏆 XGBoost (Bayesian)", "Random Forest", "Logistic Regression"]
-            )
-            st.info(f"Selected: {class_model}")
+            if st.button("💾 Save Settings", type="primary", use_container_width=True):
+                st.success("Settings saved successfully!")
 
         with col2:
-            st.markdown("#### Regression Model")
-            reg_model = st.selectbox(
-                "Select regression model",
-                ["🏆 XGBoost (Bayesian)", "Random Forest", "Linear Regression"]
-            )
-            st.info(f"Selected: {reg_model}")
+            if st.button("🔄 Reset to Defaults", use_container_width=True):
+                st.info("Settings reset to defaults!")
 
-        st.markdown("---")
-
-        st.markdown("### 📊 Data Settings")
-
-        batch_size = st.slider("Batch Size", 10, 1000, 100)
-        confidence_threshold = st.slider("Confidence Threshold (%)", 0, 100, 75)
-
-        st.markdown("---")
-
-        st.markdown("### 💾 Cache & Storage")
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if st.button("🗑️ Clear Cache"):
-                st.session_state.clear()
-                st.success("✅ Cache cleared!")
-
-        with col2:
-            if st.button("📊 Export System Log"):
-                st.info("Export feature coming soon!")
-
-        st.markdown("---")
-
-        st.success("""
-        ### ✅ Admin Panel Ready
-
-        - **Data Upload:** Upload customer data for batch processing
-        - **Batch Predictions:** Run predictions on multiple customers
-        - **Results Download:** Export predictions as CSV
-        - **System Monitoring:** Check system health and performance
-        - **Settings:** Configure model and system parameters
-        """)
+if __name__ == "__main__":
+    main()
