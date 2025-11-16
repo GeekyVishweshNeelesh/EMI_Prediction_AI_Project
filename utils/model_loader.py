@@ -64,6 +64,7 @@ def find_models_directory(custom_path: Optional[str] = None) -> Path:
 
     # Strategy 2: Try common locations
     possible_paths = [
+<<<<<<< HEAD
         # Current directory
         Path("saved_models"),
 
@@ -80,6 +81,11 @@ def find_models_directory(custom_path: Optional[str] = None) -> Path:
 
         # One level up
         Path("../saved_models"),
+=======
+        Path("saved_models"),                                      # Relative to project root
+        Path(__file__).parent.parent / "saved_models",            # Relative to this file
+        Path("/mount/src/emi_prediction_ai_project/saved_models/") # Streamlit Cloud absolute
+>>>>>>> 4cec8e623a06b0712138d8308e43153ec1d154d6
     ]
 
     # Try each path
