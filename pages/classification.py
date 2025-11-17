@@ -1,5 +1,6 @@
 """
 pages/classification.py - EMI Eligibility Classification Page
+UPDATED: Uses 25 features (22 base + 3 derived)
 """
 
 import streamlit as st
@@ -60,7 +61,7 @@ def main(models=None):
     st.sidebar.info(f"**Active Model:** {selected_model_name}")
 
     # ========================================================================
-    # INPUT FORM
+    # INPUT FORM - Personal Details
     # ========================================================================
 
     st.header("📝 Customer Information")
@@ -88,6 +89,10 @@ def main(models=None):
         family_size = st.number_input("Family Size", min_value=1, max_value=20, value=4)
         dependents = st.number_input("Dependents", min_value=0, max_value=10, value=2)
 
+    # ========================================================================
+    # INPUT FORM - Financial Information
+    # ========================================================================
+
     st.header("💰 Financial Information")
 
     col4, col5, col6 = st.columns(3)
@@ -112,9 +117,10 @@ def main(models=None):
         emergency_fund = st.number_input("Emergency Fund (₹)", min_value=0, max_value=5000000, value=50000, step=5000)
 
     # ========================================================================
-    # DATA PREPARATION
+    # DATA PREPARATION - 22 Base Features
     # ========================================================================
 
+    # Encode categorical variables
     gender_encoded = 1 if gender == "Male" else 0
     marital_encoded = {"Single": 0, "Married": 1, "Divorced": 2}[marital_status]
     education_encoded = {"High School": 0, "Bachelor": 1, "Master": 2, "PhD": 3}[education]
@@ -122,6 +128,7 @@ def main(models=None):
     company_encoded = {"Private": 0, "Government": 1, "MNC": 2}[company_type]
     house_encoded = {"Rented": 0, "Owned": 1, "Parental": 2}[house_type]
 
+    # Create 22 base features in correct order
     feature_order = [
         'age', 'gender', 'marital_status', 'education',
         'monthly_salary', 'employment_type', 'years_of_employment', 'company_type',
@@ -156,6 +163,11 @@ def main(models=None):
         'emergency_fund': emergency_fund
     }
 
+    # Convert to numpy array (22 base features)
+    # The predictions.py will convert this to 25 features by adding:
+    # - Feature 23: total_monthly_expenses
+    # - Feature 24: disposable_income
+    # - Feature 25: debt_to_income_ratio
     input_array = np.array([customer_data[feat] for feat in feature_order])
 
     # ========================================================================
@@ -164,27 +176,33 @@ def main(models=None):
 
     st.markdown("---")
 
-    with st.expander("📋 View Input Summary"):
+    # Show input summary
+    with st.expander("📋 View Input Summary (22 Base Features)"):
         summary_df = pd.DataFrame({
             'Feature': feature_order,
             'Value': input_array
         })
         st.dataframe(summary_df, use_container_width=True)
 
-<<<<<<< HEAD
+        st.info("""
+        **Note:** The model uses 25 features total:
+        - 22 base features (shown above)
+        - 3 derived features (calculated automatically):
+          * total_monthly_expenses
+          * disposable_income
+          * debt_to_income_ratio
+        """)
+
+    # Predict button
     if st.button("🔮 Predict EMI Eligibility", type="primary", use_container_width=True):
         with st.spinner("Making prediction..."):
+            # predict_emi_eligibility will convert 22 features to 25 features
             result = predict_emi_eligibility(model, scaler, input_array)
-=======
-    # Predict button
-        if st.button("🔮 Predict EMI Eligibility", type="primary", use_container_width=True):
-            with st.spinner("Making prediction..."):
-                result = predict_emi_eligibility(model, scaler, input_array)
->>>>>>> 647d6fd7c05b8eee8121f5dc0333f678b9b2f20a
 
         if result.get('success', False):
             st.success("✅ Prediction completed successfully!")
 
+            # Display results
             col_res1, col_res2 = st.columns(2)
 
             with col_res1:
@@ -196,11 +214,13 @@ def main(models=None):
 
             with col_res2:
                 confidence = result['probability'] * 100
-                st.metric("Prediction Confidence", f"{confidence:.2f}%")
+                st.metric("Prediction Confidence", f"{confidence:.2f}%", help="Model's confidence in this prediction")
 
+            # Show detailed probabilities
             st.markdown("---")
             st.subheader("📊 Prediction Probabilities")
 
+            # Safely extract probabilities
             probabilities = result.get('probabilities', [0.5, 0.5])
 
             if isinstance(probabilities, (list, tuple, np.ndarray)):
@@ -217,25 +237,34 @@ def main(models=None):
                 prob_not_eligible = 0.5
                 prob_eligible = 0.5
 
+            # Create probability DataFrame
             prob_df = pd.DataFrame({
                 'Eligibility': ['Not Eligible', 'Eligible'],
                 'Probability': [prob_not_eligible, prob_eligible]
             })
 
+            # Display chart and table
             st.bar_chart(prob_df.set_index('Eligibility'))
             st.dataframe(prob_df, use_container_width=True)
 
+            # Financial insights
             st.markdown("---")
             st.subheader("💡 Financial Insights")
 
             total_monthly_expenses = (
-                school_fees + college_fees + travel_expenses +
-                groceries_utilities + other_monthly_expenses + current_emi_amount
+                monthly_rent +
+                school_fees +
+                college_fees +
+                travel_expenses +
+                groceries_utilities +
+                other_monthly_expenses +
+                current_emi_amount
             )
 
             disposable_income = monthly_salary - total_monthly_expenses
+            debt_to_income_ratio = (current_emi_amount / monthly_salary * 100) if monthly_salary > 0 else 0
 
-            col_insight1, col_insight2, col_insight3 = st.columns(3)
+            col_insight1, col_insight2, col_insight3, col_insight4 = st.columns(4)
 
             with col_insight1:
                 st.metric("Total Monthly Expenses", f"₹{total_monthly_expenses:,.0f}")
@@ -246,6 +275,30 @@ def main(models=None):
             with col_insight3:
                 expense_ratio = (total_monthly_expenses / monthly_salary * 100) if monthly_salary > 0 else 0
                 st.metric("Expense Ratio", f"{expense_ratio:.1f}%")
+
+            with col_insight4:
+                st.metric("Debt-to-Income Ratio", f"{debt_to_income_ratio:.1f}%")
+
+            # Show derived features
+            with st.expander("🔍 View Derived Features (3 additional)"):
+                derived_df = pd.DataFrame({
+                    'Derived Feature': [
+                        'total_monthly_expenses',
+                        'disposable_income',
+                        'debt_to_income_ratio'
+                    ],
+                    'Value': [
+                        total_monthly_expenses,
+                        disposable_income,
+                        debt_to_income_ratio
+                    ],
+                    'Description': [
+                        'Sum of all monthly expenses including rent and current EMI',
+                        'Monthly salary minus total expenses',
+                        'Current EMI as percentage of monthly salary'
+                    ]
+                })
+                st.dataframe(derived_df, use_container_width=True)
 
         else:
             st.error(f"❌ Prediction failed: {result.get('error', 'Unknown error')}")
