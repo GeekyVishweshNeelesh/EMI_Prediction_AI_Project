@@ -103,15 +103,14 @@ Ensure all 32 model files are in the `saved_models/` folder:
 streamlit run app.py
 ```
 
-The app will be available at `http://localhost:8501`
-
 ---
 
 ## ☁️ Deploy on Streamlit Cloud
 
 ### Prerequisites
 - GitHub account
-- Streamlit Cloud account (free at share.streamlit.io)
+- Streamlit Cloud account
+- https://emipredictionai.streamlit.app/
 
 ### Deployment Steps
 
@@ -131,7 +130,7 @@ git push origin main
    - Click "Deploy"
 
 3. **Share Public URL**
-   - Your app is now live at: `https://share.streamlit.io/your-username/repo-name`
+   - Your app is now live at: `https://emipredictionai.streamlit.app/`
 
 ---
 
