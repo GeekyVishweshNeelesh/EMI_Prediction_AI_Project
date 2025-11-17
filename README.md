@@ -4,7 +4,7 @@
 
 EMIPredict AI is a comprehensive machine learning platform designed to help financial institutions, banks, and FinTech companies make data-driven decisions for EMI (Equated Monthly Installment) predictions and risk assessment.
 
-**Live Demo:** [Deploy on Streamlit Cloud]
+**Live Demo:** https://emipredictionai.streamlit.app/
 
 ---
 
