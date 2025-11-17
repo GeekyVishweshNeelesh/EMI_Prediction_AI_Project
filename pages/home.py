@@ -38,7 +38,7 @@ def main():
         st.metric("📈 Total Records", "400,000", "Customers Analyzed")
 
     with col2:
-        st.metric("🔧 Features", "22", "Input Variables")
+        st.metric("🔧 Features", "25", "Input Variables")
 
     with col3:
         st.metric("🤖 ML Models", "8", "Trained Models")
